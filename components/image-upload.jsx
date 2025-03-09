@@ -99,11 +99,40 @@ export default function ImageUpload() {
     setUploadedFiles((prev) => prev.filter((item) => item !== file));
   };
 
-  const onDrop = useCallback((acceptedFiles) => {
-    setFilesToUpload((prev) => [
-      ...prev,
-      ...acceptedFiles.map((file) => ({ progress: 0, File: file, source: null })),
-    ]);
+  const onDrop = useCallback(async (acceptedFiles) => {
+    setFilesToUpload((prevUploadProgress) => {
+      return [
+        ...prevUploadProgress,
+        ...acceptedFiles.map((file) => {
+          return {
+            progress: 0,
+            File: file,
+            source: null,
+          };
+        }),
+      ];
+    });
+
+    const formData = new FormData();
+    acceptedFiles.forEach((file) => {
+      formData.append("files", file);
+    });
+
+    try {
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        alert("Files uploaded successfully!");
+      } else {
+        console.error("Error uploading files:", data.message);
+      }
+    } catch (error) {
+      console.error("Error uploading files:", error);
+    }
   }, []);
 
   const { getRootProps, getInputProps } = useDropzone({ onDrop });
@@ -127,7 +156,7 @@ export default function ImageUpload() {
             </p>
           </div>
         </label>
-        <Input {...getInputProps()} type="file" className="hidden" />
+        <Input {...getInputProps()} type="file" className="hidden" accept="application/PDF" />
       </div>
       {filesToUpload.length > 0 && (
         <ScrollArea className="h-40">
