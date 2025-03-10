@@ -1,44 +1,21 @@
 "use client";
 
+import { toast } from "sonner"
 import axios from "axios";
 import {
-  AudioWaveform,
   File as FileIcon,
-  FileImage,
-  FolderArchive,
   UploadCloud,
-  Video,
   X,
 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Input } from "./ui/input";
-import progress from "./ui/progress";
+import { Progress } from "@/components/ui/progress"
 import { ScrollArea } from "./ui/scroll-area";
-
-const ImageColor = {
-  bgColor: "bg-purple-600",
-  fillColor: "fill-purple-600",
-};
 
 const PdfColor = {
   bgColor: "bg-blue-400",
   fillColor: "fill-blue-400",
-};
-
-const AudioColor = {
-  bgColor: "bg-yellow-400",
-  fillColor: "fill-yellow-400",
-};
-
-const VideoColor = {
-  bgColor: "bg-green-400",
-  fillColor: "fill-green-400",
-};
-
-const OtherColor = {
-  bgColor: "bg-gray-400",
-  fillColor: "fill-gray-400",
 };
 
 export default function ImageUpload() {
@@ -46,34 +23,12 @@ export default function ImageUpload() {
   const [filesToUpload, setFilesToUpload] = useState([]);
 
   const getFileIconAndColor = (file) => {
-    if (file.type.includes("image")) {
-      return {
-        icon: <FileImage size={40} className={ImageColor.fillColor} />,
-        color: ImageColor.bgColor,
-      };
-    }
     if (file.type.includes("pdf")) {
       return {
         icon: <FileIcon size={40} className={PdfColor.fillColor} />,
         color: PdfColor.bgColor,
       };
     }
-    if (file.type.includes("audio")) {
-      return {
-        icon: <AudioWaveform size={40} className={AudioColor.fillColor} />,
-        color: AudioColor.bgColor,
-      };
-    }
-    if (file.type.includes("video")) {
-      return {
-        icon: <Video size={40} className={VideoColor.fillColor} />,
-        color: VideoColor.bgColor,
-      };
-    }
-    return {
-      icon: <FolderArchive size={40} className={OtherColor.fillColor} />,
-      color: OtherColor.bgColor,
-    };
   };
 
   const onUploadProgress = (progressEvent, file, cancelSource) => {
@@ -118,21 +73,25 @@ export default function ImageUpload() {
       formData.append("files", file);
     });
 
-    try {
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+    const fileUploadBatch = acceptedFiles.map((file) => {
+      const formData = new FormData();
+      formData.append("files", file);
 
-      const data = await response.json();
-      if (response.ok) {
-        alert("Files uploaded successfully!");
-      } else {
-        console.error("Error uploading files:", data.message);
-      }
+      const cancelSource = axios.CancelToken.source();
+      return axios.post("/api/upload", formData, {
+        onUploadProgress: (progressEvent) =>
+          onUploadProgress(progressEvent, file, cancelSource),
+        cancelToken: cancelSource.token,
+      });
+    });
+
+    try {
+      await Promise.all(fileUploadBatch);
+      toast("Uploaded Successful!", { description: "Added all files" })
     } catch (error) {
-      console.error("Error uploading files:", error);
+      toast("Error", { description: "Files were not uploaded: ", error })
     }
+
   }, []);
 
   const { getRootProps, getInputProps } = useDropzone({ onDrop });
@@ -158,6 +117,7 @@ export default function ImageUpload() {
         </label>
         <Input {...getInputProps()} type="file" className="hidden" accept="application/PDF" />
       </div>
+
       {filesToUpload.length > 0 && (
         <ScrollArea className="h-40">
           <p className="font-medium my-2 mt-6 text-muted-foreground text-sm">Files to upload</p>
@@ -171,7 +131,7 @@ export default function ImageUpload() {
                       <p className="text-muted-foreground">{File.name.slice(0, 25)}</p>
                       <span className="text-xs">{progress}%</span>
                     </div>
-                    <progress progress={progress} className={getFileIconAndColor(File).color} />
+                    <Progress progress={progress} className={getFileIconAndColor(File).color} />
                   </div>
                 </div>
                 <button onClick={() => { if (source) source.cancel("Upload cancelled"); removeFile(File); }}
@@ -182,6 +142,43 @@ export default function ImageUpload() {
             ))}
           </div>
         </ScrollArea>
+      )}
+
+      {uploadedFiles.length > 0 && (
+        <div>
+          <p className="font-medium my-2 mt-6 text-muted-foreground text-sm">
+            Uploaded Files
+          </p>
+          <div className="space-y-2 pr-3">
+            {uploadedFiles.map((file) => {
+              return (
+                <div
+                  key={file.lastModified}
+                  className="flex justify-between gap-2 rounded-lg overflow-hidden border border-slate-100 group hover:pr-0 pr-2 hover:border-slate-300 transition-all"
+                >
+                  <div className="flex items-center flex-1 p-2">
+                    <div className="text-white">
+                      {getFileIconAndColor(file).icon}
+                    </div>
+                    <div className="w-full ml-2 space-y-1">
+                      <div className="text-sm flex justify-between">
+                        <p className="text-muted-foreground ">
+                          {file.name.slice(0, 25)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => removeFile(file)}
+                    className="bg-red-500 text-white transition-all items-center justify-center px-2 hidden group-hover:flex"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
     </div>
   );

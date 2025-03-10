@@ -5,6 +5,7 @@ import Navbar from "@/components/navbar";
 import "@/app/globals.css";
 import { ThemeProvider } from "next-themes";
 import Footer from "@/components/footer";
+import { Toaster } from "@/components/ui/sonner"
 
 export default function RootLayout({ children }) {
   return (
@@ -13,7 +14,8 @@ export default function RootLayout({ children }) {
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <Navbar />
           <main>{children}</main>
-          <Footer/>
+          <Footer />
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>
