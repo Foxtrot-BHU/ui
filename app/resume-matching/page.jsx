@@ -10,19 +10,19 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Loader2 } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
-
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [jobDescription, setJobDescription] = useState("");
-  const [rankedCandidates, setRankedCandidates] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [ws, setWs] = useState({ status: "", message: "" });
+
+  const router = useRouter();
 
   const handleSubmit = async () => {
     setIsProcessing(true);
+    setWs({ status: "notConnected", message: "Connecting to server..." });
 
     const response = await fetch("/api/process-resumes", {
       method: "POST",
@@ -31,11 +31,35 @@ export default function Home() {
     });
 
     if (response.ok) {
-      const data = await response.json();
-      setRankedCandidates(data);
+      console.log("Backend accepted processing request");
     }
 
-    setIsProcessing(false);
+    let socket = new WebSocket("ws://localhost:8080");
+
+    socket.onopen = () => {
+      console.log("Connected to WebSocket server");
+      setWs({ status: "connected", message: "Connected with model" });
+    };
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log("Received:", data);
+
+      if (data.status === "Complete") {
+        setWs({ status: data.status, message: data.message });
+        setIsProcessing(false);
+        localStorage.setItem("rankedCandidates", JSON.stringify(data.candidates)); // Store data
+        socket.close();
+        router.push("/resume-matching/dashboard"); // Navigate
+      } else {
+        setWs(data);
+      }
+    };
+
+    socket.onclose = () => {
+      console.log("WebSocket connection closed");
+      setIsProcessing(false);
+    };
   };
 
   // ✅ Show loading animation when processing
@@ -49,11 +73,10 @@ export default function Home() {
           autoplay
           style={{ height: "150px", width: "150px" }}
         />
-        <p className="text-sm text-muted-foreground mt-2">Analyzing resumes...</p>
+        <p className="text-sm text-muted-foreground mt-2">{ws.message}</p>
       </div>
     );
   }
-
 
   return (
     <main className="flex flex-col items-center min-h-screen p-6 space-y-6">
@@ -89,33 +112,9 @@ export default function Home() {
       </Dialog>
 
       {/* Submit Button */}
-      <Button className="px-6 py-2 rounded-md bg-blue-600 text-white" onClick={handleSubmit} >
+      <Button className="px-6 py-2 rounded-md bg-blue-600 text-white" onClick={handleSubmit}>
         Process Resumes
       </Button>
-
-      {/* Display Ranked Candidates */}
-      {rankedCandidates.length > 0 && (
-        <div className="w-full max-w-2xl mt-6 p-4 border rounded-md">
-          <h3 className="text-xl font-semibold">Top Matching Candidates</h3>
-          <ul className="mt-3 space-y-3">
-            {rankedCandidates.map((candidate, index) => (
-              <li key={index} className="flex justify-between items-center border p-3 rounded-md">
-                <span className="font-medium">
-                  {candidate.rank}. {candidate.name}
-                </span>
-                <span className="text-gray-600">Match: {candidate.match_score}%</span>
-                <a
-                  href={`/uploads/${candidate.resume_file}`}
-                  download
-                  className="text-blue-500 underline"
-                >
-                  Download Resume
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </main>
   );
 }
