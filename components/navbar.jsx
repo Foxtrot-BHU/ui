@@ -46,7 +46,7 @@ export default function Navbar() {
         </div>
 
         {/* Right-side buttons */}
-        <div className="flex items-center space-x-4">
+        {/* <div className="flex items-center space-x-4">
           <ModeToggle />
           <Button asChild>
             <Link href="/log-in">Login</Link>
@@ -54,7 +54,7 @@ export default function Navbar() {
           <Button asChild>
             <Link href="/sign-up">SignUp</Link>
           </Button>
-        </div>
+        </div> */}
       </div>
     </nav>
   );
