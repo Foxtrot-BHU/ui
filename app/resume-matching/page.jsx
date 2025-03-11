@@ -124,6 +124,9 @@
 //1
 
 "use client";
+
+import { useAtom } from "jotai";
+import { idAtom } from "@/components/store";
 import { useState } from "react";
 import ImageUpload from "@/components/image-upload";
 import { Button } from "@/components/ui/button";
@@ -138,7 +141,9 @@ import {
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import { useRouter } from "next/navigation";
 
+
 export default function Home() {
+  const [id, setId] = useAtom(idAtom);
   const [jobDescription, setJobDescription] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [ws, setWs] = useState({ status: "", message: "" });
@@ -148,16 +153,19 @@ export default function Home() {
   const handleSubmit = async () => {
     setIsProcessing(true);
     setWs({ status: "notConnected", message: "Connecting to server..." });
+    let socket_addr = 8000
 
     try {
-      const response = await fetch(" http://localhost:5000/api/process-resumes", {
+      const response = await fetch(" http://localhost:8000/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobDescription }),
+        body: JSON.stringify({ jd: jobDescription }),
       });
 
       if (response.ok) {
-        console.log("Backend accepted processing request");
+        const data = await response.json();
+        setId(data.id)
+        socket_addr = data.id
       }
     } catch (error) {
       console.log('error from handlesubmit', error)
@@ -166,7 +174,7 @@ export default function Home() {
 
 
 
-    let socket = new WebSocket("ws://localhost:8080");
+    let socket = new WebSocket("ws://localhost:8000/extract/" + socket_addr);
 
     socket.onopen = () => {
       console.log("Connected to WebSocket server");
