@@ -7,7 +7,17 @@ import { useAtom } from "jotai";
 import { idAtom } from "@/components/store";
 import path from "path";
 
+// Chart.js and react-chartjs-2
+import { Doughnut } from "react-chartjs-2";
+import {
+    Chart as ChartJS,
+    ArcElement,
+    Tooltip,
+    Legend,
+} from "chart.js";
 
+// Register chart elements
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function Dashboard() {
     const [candidates, setCandidates] = useState([]);
@@ -15,7 +25,6 @@ export default function Dashboard() {
     const [currentPage, setCurrentPage] = useState(1);
     const [id, setId] = useAtom(idAtom);
     const pageSize = 5;
-
 
     const fetchCandidates = (page) => {
         setLoading(true);
@@ -41,6 +50,19 @@ export default function Dashboard() {
         setCandidates((prev) => prev.filter((_, i) => i !== index));
         toast.error("Candidate Rejected!");
     };
+
+    // Function to generate data for the donut chart based on match score
+    const getMatchScoreChartData = (score) => ({
+        labels: ["Match Score", "Remaining"],
+        datasets: [
+            {
+                data: [score, 100 - score],
+                backgroundColor: ["#4caf50", "#e0e0e0"],
+                borderColor: "#fff",
+                borderWidth: 2,
+            },
+        ],
+    });
 
     return (
         <main className="flex flex-col items-center min-h-screen p-6 space-y-6">
@@ -68,13 +90,37 @@ export default function Dashboard() {
                                     <h4 className="font-semibold text-md">Experience</h4>
                                     <p className="text-sm text-gray-700">{candidate["Years of Experience"]}</p>
                                 </div>
-                                {/* Score */}
+
+                                {/* Donut chart for Match Score */}
+                                <div className="flex justify-center items-center">
+                                <Doughnut
+  data={getMatchScoreChartData(candidate.Score)}
+  options={{
+    responsive: true, 
+    maintainAspectRatio: false, // Ensures the chart can take up full width/height of its container
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: (tooltipItem) => `${tooltipItem.label}: ${tooltipItem.raw}%`,
+        },
+      },
+    },
+  }}
+  className="w-full h-30 "
+/>
+
+                                </div>
+
+                                {/* Score Text */}
                                 <div className="text-blue-600 font-medium">
                                     Match Score: {candidate.Score}%
                                 </div>
+
+                                {/* File */}
                                 <div className="flex font-medium">
                                     File: <p className="text-blue-600 font-medium underline">{path.basename(candidate.File)}</p>
                                 </div>
+
                                 {/* Actions */}
                                 <div className="flex justify-end">
                                     <Button variant="destructive" onClick={() => handleReject(index)}>
@@ -84,6 +130,7 @@ export default function Dashboard() {
                             </CardContent>
                         </Card>
                     ))}
+
                     {/* Pagination Controls */}
                     <div className="flex justify-center space-x-3 mt-6">
                         <Button
@@ -103,9 +150,7 @@ export default function Dashboard() {
                 </div>
             ) : (
                 <p className="text-gray-500">No candidates found.</p>
-            )
-            }
-        </main >
+            )}
+        </main>
     );
 }
-

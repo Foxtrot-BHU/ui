@@ -9,10 +9,9 @@ import { cn } from "@/lib/utils";
 
 const navLinks = [
   { name: "Home", href: "/" },
-  { name: "Job Listings", href: "/jobs" },
-  { name: "Candidates", href: "/candidates" },
-  { name: "Employers", href: "/employers" },
-  { name: "AI Matching", href: "/ai-matching" },
+  { name: "Job Listings", href: "#" },
+  {name:'Start',href:"/resume-matching"},
+  { name: "About", href: "#" },
 ];
 
 export default function Navbar() {
@@ -43,12 +42,12 @@ export default function Navbar() {
               {link.name}
             </Link>
           ))}
+<ModeToggle />
         </div>
 
         {/* Right-side buttons */}
         {/* <div className="flex items-center space-x-4">
           <Button asChild>
-        <ModeToggle />
             <Link href="/log-in">Login</Link>
           </Button>
           <Button asChild>
