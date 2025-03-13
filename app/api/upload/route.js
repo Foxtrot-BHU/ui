@@ -10,7 +10,7 @@ export const config = {
 };
 
 export async function POST(request) {
-  const uploadDir = path.join(process.cwd(), "public");
+  const uploadDir = path.join(process.cwd(), "uploads");
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }

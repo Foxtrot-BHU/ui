@@ -45,10 +45,10 @@ export default function Navbar() {
           ))}
         </div>
 
-        <ModeToggle />
         {/* Right-side buttons */}
         {/* <div className="flex items-center space-x-4">
           <Button asChild>
+        <ModeToggle />
             <Link href="/log-in">Login</Link>
           </Button>
           <Button asChild>
