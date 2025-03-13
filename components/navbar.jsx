@@ -8,10 +8,10 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
-  { name: "Home", href: "/" },
-  { name: "Job Listings", href: "#" },
-  {name:'Start',href:"/resume-matching"},
-  { name: "About", href: "#" },
+  { name: "Home", href: "/", key: 1 },
+  { name: "Job Listings", href: "#", key: 2 },
+  { name: 'Start', href: "/resume-matching", key: 3 },
+  { name: "About", href: "#", key: 4 },
 ];
 
 export default function Navbar() {
@@ -32,7 +32,7 @@ export default function Navbar() {
         <div className="hidden md:flex space-x-6">
           {navLinks.map((link) => (
             <Link
-              key={link.href}
+              key={link.key}
               href={link.href}
               className={cn(
                 "text-sm font-medium hover:text-blue-600 transition",
@@ -42,7 +42,7 @@ export default function Navbar() {
               {link.name}
             </Link>
           ))}
-<ModeToggle />
+          <ModeToggle />
         </div>
 
         {/* Right-side buttons */}
